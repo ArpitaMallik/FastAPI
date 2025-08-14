@@ -82,9 +82,27 @@ def predict_premium(data: UserInput):
         'occupation': data.occupation
     }])
 
-    prediction = model.predict(input_df)[0]
+    # Prediction
+    predicted_class = model.predict(input_df)[0]
 
-    return JSONResponse(status_code=200, content={'predicted_category': prediction})
+    # Probabilities for each class
+    if hasattr(model, "predict_proba"):
+        probabilities = model.predict_proba(input_df)[0]
+        class_labels = model.classes_
+        class_probabilities = dict(zip(class_labels, probabilities))
+        confidence = float(class_probabilities[predicted_class])
+    else:
+        # If the model doesn't support predict_proba
+        class_probabilities = {}
+        confidence = None
+
+    return JSONResponse(status_code=200, content={
+        "response": {
+            "predicted_category": predicted_class,
+            "confidence": confidence,
+            "class_probabilities": class_probabilities
+        }
+    })
 
 
 
